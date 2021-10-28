@@ -43,7 +43,11 @@ type Config struct {
 	PriceTickerConfig `json:"priceTickerConfig"`
 }
 
-type GasTickerConfig struct{}
+type GasTickerConfig struct {
+	APIKey        string `json:"apiKey"`
+	DiscordBotKey string `json:"discordBotKey"`
+	GuildID       string `json:"guildID"`
+}
 
 type PriceTickerConfig struct {
 	CoinList []struct {
@@ -59,11 +63,12 @@ type Core struct {
 	mapMutex   sync.RWMutex
 	initStatus bool
 
-	mapper          map[string]string
-	sessionPool     map[string]*discordgo.Session
-	logger          *zap.SugaredLogger
-	config          *Config
-	coingeckoClient *resty.Client
+	mapper              map[string]string
+	sessionPool         map[string]*discordgo.Session
+	logger              *zap.SugaredLogger
+	config              *Config
+	coingeckoClient     *resty.Client
+	ethGasStationClient *resty.Client
 }
 
 func NewCore(cfg *Config, logger *zap.SugaredLogger) (*Core, error) {
@@ -92,14 +97,12 @@ func (w *Core) getSession(key string) (*discordgo.Session, error) {
 		logger.Debug("session not found, trying to initialize connection...")
 		client, err := discordgo.New("Bot " + key)
 		if err != nil {
-			logger.Error("failed to initialize websocket connection: ", err)
-			return nil, err
+			return nil, fmt.Errorf("failed to initialize websocket connection: %w", err)
 		}
 		logger.Debug("open websocket connection to discord...")
 		err = client.Open()
 		if err != nil {
-			logger.Error("failed to open websocket conenction: ", err)
-			return nil, err
+			return nil, fmt.Errorf("failed to open websocket conenction: %w", err)
 		}
 		w.sessionPool[key] = client
 	}
@@ -135,7 +138,8 @@ func (w *Core) IDMapper() {
 		logger.Error("failed to map id: ", err)
 		return
 	} else if resp.IsError() {
-		logger.Error("failed to map id: ", string(resp.Body()))
+		tmperr := fmt.Errorf("failed to map id: %s", string(resp.Body()))
+		logger.Errorf(tmperr.Error())
 		return
 	}
 	idData := resp.Result().(*[]CoingeckoCoinListResponse)
@@ -157,22 +161,19 @@ func (w *Core) updateToDiscord(guildID string, discordBotKey string, nickname st
 
 	client, err := w.getSession(discordBotKey)
 	if err != nil {
-		logger.Error("failed to get discord session: ", err)
-		return err
+		return fmt.Errorf("failed to get discord session: %w", err)
 	}
 
 	logger.Debug("change nickname...")
 	err = client.GuildMemberNickname(guildID, "@me", nickname)
 	if err != nil {
-		logger.Error("failed to change nickname: ", err)
-		return err
+		return fmt.Errorf("failed to change nickname: %w", err)
 	}
 
 	logger.Debug("change status...")
 	err = client.UpdateListeningStatus(status)
 	if err != nil {
-		logger.Error("failed to change status: ", err)
-		return err
+		return fmt.Errorf("failed to change status: %w", err)
 	}
 
 	return nil
@@ -208,6 +209,10 @@ func (w *Core) UpdatePriceTicker() error {
 
 		if err != nil {
 			logger.Errorf("failed to fetch %s: %w", coin.ID, err)
+			continue
+		} else if resp.IsError() {
+			tmperr := fmt.Errorf("failed to fetch %s: %s", coin.ID, string(resp.Body()))
+			logger.Errorf(tmperr.Error())
 			continue
 		}
 
@@ -270,10 +275,10 @@ func main() {
 func realMain() {
 	var tmpLog *zap.Logger
 	var err error
-	if val := os.Getenv("MODE"); val == "PRODUCTION" {
-		tmpLog, err = zap.NewProduction()
-	} else {
+	if val := os.Getenv("MODE"); val == "DEBUG" {
 		tmpLog, err = zap.NewDevelopment()
+	} else {
+		tmpLog, err = zap.NewProduction()
 	}
 	if err != nil {
 		panic("developer is dumb as fuck, can't even initialize log properly")
