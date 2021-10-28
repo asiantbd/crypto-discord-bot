@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -120,7 +121,7 @@ func (w *Core) symbolMapper(s string) string {
 	return "$"
 }
 
-func (w *Core) IDMapper() {
+func (w *Core) IDMapper() error {
 	logger := w.logger.Named("IDMapper")
 	defer logger.Sync()
 	logger.Debug("starting IDMapper...")
@@ -136,11 +137,11 @@ func (w *Core) IDMapper() {
 		Get("/coins/list")
 	if err != nil {
 		logger.Error("failed to map id: ", err)
-		return
+		return err
 	} else if resp.IsError() {
 		tmperr := fmt.Errorf("failed to map id: %s", string(resp.Body()))
 		logger.Errorf(tmperr.Error())
-		return
+		return err
 	}
 	idData := resp.Result().(*[]CoingeckoCoinListResponse)
 
@@ -152,6 +153,8 @@ func (w *Core) IDMapper() {
 	logger.Debug("assign new map to core...")
 	w.mapper = m
 	w.initStatus = true
+
+	return nil
 }
 
 func (w *Core) updateToDiscord(guildID string, discordBotKey string, nickname string, status string) error {
@@ -223,11 +226,11 @@ func (w *Core) UpdatePriceTicker() error {
 			continue
 		}
 
-		price := jsonParser.Path(fmt.Sprintf("%s.usd", ids)).Data().(float64)
-		change := jsonParser.Path(fmt.Sprintf("%s.usd_24h_change", ids)).Data().(float64)
+		price := strconv.FormatFloat(jsonParser.Path(fmt.Sprintf("%s.usd", ids)).Data().(float64), 'f', coin.DecimalPlace, 64)
+		change := strconv.FormatFloat(jsonParser.Path(fmt.Sprintf("%s.usd_24h_change", ids)).Data().(float64), 'f', 2, 64)
 
 		logger.Debug("trying to update discord bot...")
-		err = w.updateToDiscord(coin.GuildID, coin.DiscordBotKey, fmt.Sprintf("%s %s%f", coin.ID, w.symbolMapper(coin.VSCurrencies), price), fmt.Sprintf("24H: %f%%", change))
+		err = w.updateToDiscord(coin.GuildID, coin.DiscordBotKey, fmt.Sprintf("%s %s%s", coin.ID, w.symbolMapper(coin.VSCurrencies), price), fmt.Sprintf("24H: %s%%", change))
 		if err != nil {
 			logger.Error("failed to update to discord: ", err)
 			return err
@@ -256,8 +259,8 @@ func (w *Core) UpdateGasTicker() error {
 	}
 
 	data := resp.Result().(*ETHGasStationGasFeeResponse)
-	nickname := fmt.Sprintf("🚶%f gwei", float64(data.Average/10.0))
-	status := fmt.Sprintf("⚡%f 🐌%f", float64(data.Fast/10.0), float64(data.SafeLow/10.0))
+	nickname := fmt.Sprintf("🚶%d gwei", data.Average/10.0)
+	status := fmt.Sprintf("⚡%d 🐌%d", data.Fast/10.0, data.SafeLow/10.0)
 
 	err = w.updateToDiscord(w.config.GasTickerConfig.GuildID, w.config.GasTickerConfig.DiscordBotKey, nickname, status)
 	if err != nil {
@@ -289,18 +292,16 @@ func realMain() {
 	defer initLogger.Sync()
 
 	initLogger.Info("setting variable for viper")
-	viper.SetConfigName("config")
-	viper.SetConfigType("json")
-	viper.AddConfigPath(".")
-
-	initLogger.Info("get config values")
-	err = viper.ReadInConfig()
+	err = setViper()
 	if err != nil {
-		initLogger.Fatal("failed to read config file: ", err)
+		initLogger.Error("failed to initialize viper variable: ", err)
 		return
 	}
-	var cfg *Config
-	viper.Unmarshal(&cfg)
+	cfg, err := generateConfig()
+	if err != nil {
+		initLogger.Error("failed to generate config: ", err)
+		return
+	}
 
 	initLogger.Info("initializing core object...")
 	core, err := NewCore(cfg, logger)
@@ -316,4 +317,18 @@ func realMain() {
 	c.Every(1).Minute().Do(core.UpdatePriceTicker)
 	c.Every(1).Minute().Do(core.UpdateGasTicker)
 	c.StartBlocking()
+}
+
+func generateConfig() (*Config, error) {
+	var cfg *Config
+	err := viper.Unmarshal(&cfg)
+	return cfg, err
+}
+
+func setViper() error {
+	viper.SetConfigName("config")
+	viper.SetConfigType("json")
+	viper.AddConfigPath(".")
+
+	return viper.ReadInConfig()
 }
