@@ -1,0 +1,13 @@
+{
+    "priceTickerConfig": {
+        "coinList": [
+            {
+                "id": "DOGE",
+                "decimalPlace": 4,
+                "vsCurrencies": "USD",
+                "discordBotKey": "test",
+                "guildID": "test"
+            }
+        ]
+    }
+}
