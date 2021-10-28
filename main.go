@@ -24,6 +24,20 @@ type CoingeckoCoinListResponse struct {
 	Name   string `json:"name"`
 }
 
+type ETHGasStationGasFeeResponse struct {
+	Fast        int     `json:"fast"`
+	Fastest     int     `json:"fastest"`
+	SafeLow     int     `json:"safeLow"`
+	Average     int     `json:"average"`
+	BlockTime   float64 `json:"block_time"`
+	BlockNum    int     `json:"blockNum"`
+	Speed       float64 `json:"speed"`
+	SafeLowWait float64 `json:"safeLowWait"`
+	AvgWait     float64 `json:"avgWait"`
+	FastWait    float64 `json:"fastWait"`
+	FastestWait float64 `json:"fastestWait"`
+}
+
 type Config struct {
 	GasTickerConfig   `json:"gasTickerConfig"`
 	PriceTickerConfig `json:"priceTickerConfig"`
@@ -56,12 +70,16 @@ func NewCore(cfg *Config, logger *zap.SugaredLogger) (*Core, error) {
 	coingeckoClient := resty.New()
 	coingeckoClient.HostURL = "https://api.coingecko.com/api/v3"
 
+	ethGasStationClient := resty.New()
+	ethGasStationClient.HostURL = "https://ethgasstation.info/api/"
+
 	return &Core{
-		sessionPool:     make(map[string]*discordgo.Session),
-		initStatus:      false,
-		logger:          logger,
-		config:          cfg,
-		coingeckoClient: coingeckoClient,
+		sessionPool:         make(map[string]*discordgo.Session),
+		initStatus:          false,
+		logger:              logger,
+		config:              cfg,
+		coingeckoClient:     coingeckoClient,
+		ethGasStationClient: ethGasStationClient,
 	}, nil
 }
 
@@ -213,6 +231,38 @@ func (w *Core) UpdatePriceTicker() error {
 	return nil
 }
 
+func (w *Core) UpdateGasTicker() error {
+	logger := w.logger.Named("UpdateGasTicker")
+	defer logger.Sync()
+	logger.Debug("Starting UpdateGasTicker...")
+
+	resp, err := w.ethGasStationClient.R().
+		SetResult(ETHGasStationGasFeeResponse{}).
+		SetQueryParams(map[string]string{
+			"api-key": w.config.GasTickerConfig.APIKey,
+		}).Get("/ethgasAPI.json")
+	if err != nil {
+		logger.Errorf("failed to fetch gas: %w", err)
+		return err
+	} else if resp.IsError() {
+		tmperr := fmt.Errorf("failed to fetch gas: %s", string(resp.Body()))
+		logger.Errorf(tmperr.Error())
+		return tmperr
+	}
+
+	data := resp.Result().(*ETHGasStationGasFeeResponse)
+	nickname := fmt.Sprintf("🚶%f gwei", float64(data.Average/10.0))
+	status := fmt.Sprintf("⚡%f 🐌%f", float64(data.Fast/10.0), float64(data.SafeLow/10.0))
+
+	err = w.updateToDiscord(w.config.GasTickerConfig.GuildID, w.config.GasTickerConfig.DiscordBotKey, nickname, status)
+	if err != nil {
+		logger.Error("failed to update to discord: ", err)
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 	realMain()
 }
@@ -259,5 +309,6 @@ func realMain() {
 	c := gocron.NewScheduler(time.Local).SingletonMode()
 	c.Every(1).Hour().Do(core.IDMapper)
 	c.Every(1).Minute().Do(core.UpdatePriceTicker)
+	c.Every(1).Minute().Do(core.UpdateGasTicker)
 	c.StartBlocking()
 }
