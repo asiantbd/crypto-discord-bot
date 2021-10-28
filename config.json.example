@@ -1,11 +1,16 @@
 {
+    "gasTickerConfig": {
+        "apiKey": "test",
+        "discordBotKey": "test.test.test",
+        "guildID": "test"
+    },
     "priceTickerConfig": {
         "coinList": [
             {
                 "id": "DOGE",
                 "decimalPlace": 4,
                 "vsCurrencies": "USD",
-                "discordBotKey": "test",
+                "discordBotKey": "test.test.test",
                 "guildID": "test"
             }
         ]
