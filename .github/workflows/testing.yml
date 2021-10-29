@@ -14,13 +14,13 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Create .env file
         shell: bash
         env:
           TEST_CONFIG: ${{ secrets.TEST_CONFIG }}
         run: |
           echo "$TEST_CONFIG" > ./config.test.json
-      - name: Checkout code
-        uses: actions/checkout@v2
       - name: Test
         run: go test ./...
