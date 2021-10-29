@@ -9,7 +9,7 @@ import (
 )
 
 func setViperTest() error {
-	viper.SetConfigName("config.test")
+	viper.SetConfigName("config.test.json")
 	viper.SetConfigType("json")
 	viper.AddConfigPath(".")
 
