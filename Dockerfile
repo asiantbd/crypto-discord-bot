@@ -5,8 +5,7 @@ FROM golang:${GO_VERSION}-alpine AS build
 # Argument for Go version
 WORKDIR /src
 COPY ./go.mod ./go.sum ./
-RUN go mod download               \
-    && echo "$CONFIG" > ./config.json
+RUN go mod download
 COPY ./ ./
 
 # Build the executable
@@ -14,10 +13,10 @@ RUN CGO_ENABLED=0                 \
     go build                      \
     -a -tags netgo -ldflags '-w'  \
     -o /app main.go
- 
+
 # STAGE 2: build the container to run
 FROM gcr.io/distroless/static-debian11 AS final
- 
+
 LABEL maintainer="asiantbd_team"
 
 USER nonroot:nonroot
