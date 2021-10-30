@@ -24,7 +24,6 @@ LABEL maintainer="asiantbd_team"
 USER nonroot:nonroot
 # copy compiled app
 COPY --from=build --chown=nonroot:nonroot /app /app
-COPY --from=build --chown=nonroot:nonroot /src/config.json /app/config.json
-WORKDIR /app
+COPY --from=build --chown=nonroot:nonroot /src/config.json /config.json
 # run binary; use vector form
 ENTRYPOINT ["/app"]
