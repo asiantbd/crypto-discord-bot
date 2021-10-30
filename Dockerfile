@@ -1,7 +1,8 @@
+ARG GO_VERSION
+
 # STAGE 1: building the executable
 FROM golang:${GO_VERSION}-alpine AS build
 # Argument for Go version
-ARG GO_VERSION
 ARG CONFIG
 WORKDIR /src
 COPY ./go.mod ./go.sum ./
