@@ -57,9 +57,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            GO_VERSION=${{ env.GO_VERSION }}
-            TEST_CONFIG=${{ secrets.TEST_CONFIG }}
+          build-args:
+            - GO_VERSION=${{ env.GO_VERSION }}
+            - TEST_CONFIG=${{ secrets.TEST_CONFIG }}
     
   deploy:
     name: Deploy the container bot
