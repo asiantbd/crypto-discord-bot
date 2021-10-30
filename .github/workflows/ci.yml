@@ -29,6 +29,7 @@ jobs:
   build:
     name: Build the container image
     runs-on: ubuntu-latest
+    needs: test
     steps: 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
