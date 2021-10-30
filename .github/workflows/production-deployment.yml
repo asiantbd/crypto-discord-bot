@@ -64,7 +64,6 @@ jobs:
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
             docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
             docker volume create ${{ env.CONFIG_VOLUME }}
-            echo '${{ env.PRODUCTION_CONFIG }}' > ./config.json
-            docker run --rm -v crypto-discord-bot-config:/config -v `pwd`:/tmp/config/ busybox mv /tmp/config/config.json /config/config.json
+            docker run --rm -v crypto-discord-bot-config:/config -e APP_CONFIG='${{ env.PRODUCTION_CONFIG }}' busybox sh -c 'echo "$APP_CONFIG" > /config/config.json'
             docker pull ${{ needs.build.outputs.tag }}
             docker run -d -v ${{ env.CONFIG_VOLUME }}:/config --name ${{ env.CONTAINER_NAME }} ${{ needs.build.outputs.tag }}
