@@ -7,7 +7,7 @@ FROM golang:${GO_VERSION}-alpine AS build
 WORKDIR /src
 COPY ./go.mod ./go.sum ./
 RUN go mod download               \
-    && echo ${TEST_CONFIG} > config.json
+    && echo "$TEST_CONFIG" > ./config.json
 COPY ./ ./
 
 # Build the executable
