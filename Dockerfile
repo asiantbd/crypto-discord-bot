@@ -2,11 +2,11 @@
 FROM golang:${GO_VERSION}-alpine AS build
 # Argument for Go version
 ARG GO_VERSION
-ARG TEST_CONFIG
+ARG CONFIG
 WORKDIR /src
 COPY ./go.mod ./go.sum ./
 RUN go mod download               \
-    && echo "$TEST_CONFIG" > ./config.json
+    && echo "$CONFIG" > ./config.json
 COPY ./ ./
 
 # Build the executable
