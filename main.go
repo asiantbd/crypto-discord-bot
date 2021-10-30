@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-co-op/gocron"
 	"github.com/go-resty/resty/v2"
+	"github.com/newrelic/go-agent/v3/integrations/nrzap"
+	newrelic "github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -40,8 +43,15 @@ type ETHGasStationGasFeeResponse struct {
 }
 
 type Config struct {
+	NewRelicConfig    `json:"newRelicConfig"`
 	GasTickerConfig   `json:"gasTickerConfig"`
 	PriceTickerConfig `json:"priceTickerConfig"`
+}
+
+type NewRelicConfig struct {
+	Enabled    bool   `json:"enabled"`
+	LicenseKey string `json:"licenseKey"`
+	AppName    string `json:"appName"`
 }
 
 type GasTickerConfig struct {
@@ -71,6 +81,8 @@ type Core struct {
 	config              *Config
 	coingeckoClient     *resty.Client
 	ethGasStationClient *resty.Client
+
+	newrelicApplication *newrelic.Application
 }
 
 func NewCore(cfg *Config, logger *zap.SugaredLogger) (*Core, error) {
@@ -90,8 +102,13 @@ func NewCore(cfg *Config, logger *zap.SugaredLogger) (*Core, error) {
 	}, nil
 }
 
-func (w *Core) getSession(key string) (*discordgo.Session, error) {
-	logger := w.logger.Named("getSession")
+func (w *Core) AttachNewRelicApplication(app *newrelic.Application) {
+	w.newrelicApplication = app
+}
+
+func (w *Core) getSession(ctx context.Context, key string) (*discordgo.Session, error) {
+	_, txn, logger := w.initializeContext(ctx, "getSession")
+	defer txn.StartSegment("getSession").End()
 	defer logger.Sync()
 	logger.Debug("starting getSession...")
 
@@ -123,7 +140,9 @@ func (w *Core) symbolMapper(s string) string {
 }
 
 func (w *Core) IDMapper() error {
-	logger := w.logger.Named("IDMapper")
+	_, txn, logger := w.initializeContext(context.Background(), "IDMapper")
+	defer txn.End()
+	defer txn.StartSegment("IDMapper").End()
 	defer logger.Sync()
 	logger.Debug("starting IDMapper...")
 
@@ -142,7 +161,7 @@ func (w *Core) IDMapper() error {
 	} else if resp.IsError() {
 		tmperr := fmt.Errorf("failed to map id: %s", string(resp.Body()))
 		logger.Errorf(tmperr.Error())
-		return err
+		return tmperr
 	}
 	idData := resp.Result().(*[]CoingeckoCoinListResponse)
 
@@ -158,12 +177,13 @@ func (w *Core) IDMapper() error {
 	return nil
 }
 
-func (w *Core) updateToDiscord(guildID string, discordBotKey string, nickname string, status string) error {
-	logger := w.logger.Named("updateToDiscord")
+func (w *Core) updateToDiscord(ctx context.Context, guildID string, discordBotKey string, nickname string, status string) error {
+	ctx, txn, logger := w.initializeContext(ctx, "updateToDiscord")
+	defer txn.StartSegment("updateToDiscord").End()
 	defer logger.Sync()
 	logger.Debug("starting updateToDiscord...")
 
-	client, err := w.getSession(discordBotKey)
+	client, err := w.getSession(ctx, discordBotKey)
 	if err != nil {
 		return fmt.Errorf("failed to get discord session: %w", err)
 	}
@@ -184,9 +204,10 @@ func (w *Core) updateToDiscord(guildID string, discordBotKey string, nickname st
 }
 
 func (w *Core) UpdatePriceTicker() error {
-	logger := w.logger.Named("UpdatePriceTicker")
+	ctx, txn, logger := w.initializeContext(context.Background(), "UpdatePriceTicker")
+	defer txn.End()
 	defer logger.Sync()
-	logger.Debug("Starting UpdatePriceTicker...")
+	logger.Debug("starting UpdatePriceTicker...")
 
 	if !w.initStatus {
 		logger.Error("map is not initialized yet!")
@@ -238,7 +259,7 @@ func (w *Core) UpdatePriceTicker() error {
 		change := strconv.FormatFloat(jsonParser.Path(fmt.Sprintf("%s.usd_24h_change", ids)).Data().(float64), 'f', 2, 64)
 
 		logger.Debug("trying to update discord bot...")
-		err = w.updateToDiscord(coin.GuildID, coin.DiscordBotKey, fmt.Sprintf("%s %s%s", coin.ID, w.symbolMapper(coin.VSCurrencies), price), fmt.Sprintf("24H: %s%%", change))
+		err = w.updateToDiscord(ctx, coin.GuildID, coin.DiscordBotKey, fmt.Sprintf("%s %s%s", coin.ID, w.symbolMapper(coin.VSCurrencies), price), fmt.Sprintf("24H: %s%%", change))
 		if err != nil {
 			logger.Error("failed to update to discord: ", err)
 			return err
@@ -248,9 +269,10 @@ func (w *Core) UpdatePriceTicker() error {
 }
 
 func (w *Core) UpdateGasTicker() error {
-	logger := w.logger.Named("UpdateGasTicker")
+	ctx, txn, logger := w.initializeContext(context.Background(), "UpdateGasTicker")
+	defer txn.End()
 	defer logger.Sync()
-	logger.Debug("Starting UpdateGasTicker...")
+	logger.Debug("starting UpdateGasTicker...")
 
 	resp, err := w.ethGasStationClient.R().
 		SetResult(ETHGasStationGasFeeResponse{}).
@@ -270,7 +292,7 @@ func (w *Core) UpdateGasTicker() error {
 	nickname := fmt.Sprintf("🚶%d gwei", data.Average/10.0)
 	status := fmt.Sprintf("⚡%d 🐌%d", data.Fast/10.0, data.SafeLow/10.0)
 
-	err = w.updateToDiscord(w.config.GasTickerConfig.GuildID, w.config.GasTickerConfig.DiscordBotKey, nickname, status)
+	err = w.updateToDiscord(ctx, w.config.GasTickerConfig.GuildID, w.config.GasTickerConfig.DiscordBotKey, nickname, status)
 	if err != nil {
 		logger.Error("failed to update to discord: ", err)
 		return err
@@ -286,7 +308,9 @@ func main() {
 func realMain() {
 	var tmpLog *zap.Logger
 	var err error
+	isProd := true
 	if val := os.Getenv("MODE"); val == "DEBUG" {
+		isProd = false
 		tmpLog, err = zap.NewDevelopment()
 	} else {
 		tmpLog, err = zap.NewProduction()
@@ -317,6 +341,32 @@ func realMain() {
 		initLogger.Fatal("failed to initialize core object: ", err)
 		return
 	}
+
+	initLogger.Info("initializing new relic application...")
+	app, err := newrelic.NewApplication(
+		newrelic.ConfigAppName(cfg.NewRelicConfig.AppName),
+		newrelic.ConfigLicense(cfg.NewRelicConfig.LicenseKey),
+		func(config *newrelic.Config) {
+			if isProd {
+				if cfg.NewRelicConfig.Enabled {
+					initLogger.Info("production mode detected, init for production...")
+					config.Enabled = true
+					nrzap.ConfigLogger(logger.Named("newrelic").Desugar())
+				} else {
+					initLogger.Info("production mode detected but new relic is not enabled, continue without new relic...")
+				}
+			} else {
+				config.Enabled = false
+				initLogger.Info("development mode detected, newrelic disabled")
+			}
+		})
+	if err != nil {
+		initLogger.Fatal("failed to initialize new relic application: ", err)
+		return
+	}
+
+	core.AttachNewRelicApplication(app)
+
 	core.IDMapper()
 
 	initLogger.Info("invoking cron object...")
@@ -339,4 +389,35 @@ func setViper() error {
 	viper.AddConfigPath(".")
 
 	return viper.ReadInConfig()
+}
+
+type contextKey string
+
+const loggerKey = contextKey("logger")
+
+// WithLogger creates a new context with the provided logger attached.
+func (*Core) withLogger(ctx context.Context, logger *zap.SugaredLogger) context.Context {
+	return context.WithValue(ctx, loggerKey, logger)
+}
+
+// FromContext returns the logger stored in the context. If no such logger
+// exists, a default logger is returned.
+func (w *Core) logFromContext(ctx context.Context) *zap.SugaredLogger {
+	if logger, ok := ctx.Value(loggerKey).(*zap.SugaredLogger); ok {
+		return logger
+	}
+	return w.logger
+}
+
+func (w *Core) initializeContext(ctx context.Context, name string) (context.Context, *newrelic.Transaction, *zap.SugaredLogger) {
+	var txn *newrelic.Transaction
+	if newrelic.FromContext(ctx) != nil {
+		txn = newrelic.FromContext(ctx)
+	} else {
+		txn = w.newrelicApplication.StartTransaction(name)
+		ctx = newrelic.NewContext(ctx, txn)
+	}
+	ctx = w.withLogger(ctx, w.logger.Named(name))
+	logger := w.logFromContext(ctx)
+	return ctx, txn, logger
 }
