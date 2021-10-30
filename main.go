@@ -52,11 +52,12 @@ type GasTickerConfig struct {
 
 type PriceTickerConfig struct {
 	CoinList []struct {
-		ID            string `json:"id"`
-		DecimalPlace  int    `json:"decimalPlace"`
-		VSCurrencies  string `json:"vsCurrencies"`
-		DiscordBotKey string `json:"discordBotKey"`
-		GuildID       string `json:"guildID"`
+		ID            string  `json:"id"`
+		CoingeckoID   *string `json:"coingeckoID"`
+		DecimalPlace  int     `json:"decimalPlace"`
+		VSCurrencies  string  `json:"vsCurrencies"`
+		DiscordBotKey string  `json:"discordBotKey"`
+		GuildID       string  `json:"guildID"`
 	} `json:"coinList"`
 }
 
@@ -196,7 +197,14 @@ func (w *Core) UpdatePriceTicker() error {
 	defer w.mapMutex.Unlock()
 	for _, coin := range w.config.PriceTickerConfig.CoinList {
 		logger.Debugf("trying to update %s...", coin.ID)
-		ids, ok := w.mapper[strings.ToLower(coin.ID)]
+		var ids string
+		ok := true
+		if coin.CoingeckoID != nil {
+			ids = *coin.CoingeckoID
+		} else {
+			ids, ok = w.mapper[strings.ToLower(coin.ID)]
+		}
+
 		if !ok {
 			logger.Errorf("failed to find %s", coin.ID)
 			continue
