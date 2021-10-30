@@ -337,6 +337,7 @@ func setViper() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config/")
 
 	return viper.ReadInConfig()
 }
