@@ -15,7 +15,7 @@ COPY ./ ./
 RUN CGO_ENABLED=0                 \
     go build                      \
     -a -tags netgo -ldflags '-w'  \
-    -o /${APPLICATION_NAME} main.go
+    -o /app main.go
  
 # STAGE 2: build the container to run
 FROM gcr.io/distroless/static AS final
@@ -24,7 +24,7 @@ LABEL maintainer="asiantbd_team"
 
 USER nonroot:nonroot
 # copy compiled app
-COPY --from=build --chown=nonroot:nonroot /${APPLICATION_NAME} /${APPLICATION_NAME}
+COPY --from=build --chown=nonroot:nonroot /app /app
  
 # run binary; use vector form
-ENTRYPOINT ["/${APPLICATION_NAME}"]
+ENTRYPOINT ["/app"]
