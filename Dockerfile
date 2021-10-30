@@ -17,7 +17,7 @@ RUN CGO_ENABLED=0                 \
     -o /app main.go
  
 # STAGE 2: build the container to run
-FROM gcr.io/distroless/static AS final
+FROM gcr.io/distroless/static-debian11:debug AS final
  
 LABEL maintainer="asiantbd_team"
 
