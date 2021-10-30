@@ -20,11 +20,18 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Create .env file
+      - name: Create default dir config file
         shell: bash
         env:
           TEST_CONFIG: ${{ secrets.TEST_CONFIG }}
         run: |
           echo "$TEST_CONFIG" > ./config.test.json
-      - name: Test
+      - name: Test 1
+        run: go test ./...
+      - name: Create alternate dir config file
+        shell: bash
+        run: |
+          mkdir config
+          mv ./config.test.json ./config/config.test.json
+      - name: Test 2
         run: go test ./...
