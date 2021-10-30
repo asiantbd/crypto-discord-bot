@@ -75,7 +75,7 @@ jobs:
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USERNAME }}
-          port: ${{ secrets.PRODUCTION_PORT }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT }}
           key: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
           script: |
             docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
