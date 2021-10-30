@@ -1,7 +1,6 @@
-# argument for Go version
+# Argument for Go version
 ARG GO_VERSION
 ARG APPLICATION_NAME
-
 
 # STAGE 1: building the executable
 FROM golang:${GO_VERSION}-alpine AS build
