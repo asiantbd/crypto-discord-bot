@@ -25,13 +25,13 @@ jobs:
         env:
           TEST_CONFIG: ${{ secrets.TEST_CONFIG }}
         run: |
-          echo "$TEST_CONFIG" > ./config.test.json
+          echo "$TEST_CONFIG" > ./config.json
       - name: Test 1
         run: go test ./...
       - name: Create alternate dir config file
         shell: bash
         run: |
           mkdir config
-          mv ./config.test.json ./config/config.test.json
+          mv ./config.json ./config/config.json
       - name: Test 2
         run: go test ./...
