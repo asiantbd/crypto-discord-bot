@@ -34,12 +34,6 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Create .env file
-        shell: bash
-        env:
-          PRODUCTION_CONFIG: ${{ secrets.PRODUCTION_CONFIG }}
-        run: |
-          echo "$PRODUCTION_CONFIG" > ./config.json
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
@@ -59,6 +53,7 @@ jobs:
         uses: appleboy/ssh-action@master
         env:
           CONTAINER_NAME: ticker-bot-fuiyoo
+          CONFIG_VOLUME: crypto-discord-bot-config
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USERNAME }}
@@ -67,5 +62,7 @@ jobs:
           script: |
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
             docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
+            docker volume create ${{ env.CONFIG_VOLUME }}
+            docker run --rm -v ${{ env.CONFIG_VOLUME }}:/tmp/config busybox sh -c "echo '${{ secrets.PRODUCTION_CONFIG }}' > /tmp/config/config.json"
             docker pull ${{ needs.build.outputs.tag }}
-            docker run -d --name ${{ env.CONTAINER_NAME }} ${{ needs.build.outputs.tag }}
+            docker run -d -v ${{ env.CONFIG_VOLUME }}:/config --name ${{ env.CONTAINER_NAME }} ${{ needs.build.outputs.tag }}
