@@ -79,5 +79,5 @@ jobs:
           key: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
           script: |
             docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
-            docker pull ${{ build.outputs.tag }}
-            docker run -d --name ${{ env.CONTAINER_NAME }} ${{ build.outputs.tag }}
+            docker pull ${{ needs.build.outputs.tag }}
+            docker run -d --name ${{ env.CONTAINER_NAME }} ${{ needs.build.outputs.tag }}
