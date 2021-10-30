@@ -63,21 +63,21 @@ jobs:
             GO_VERSION=${{ env.GO_VERSION }}
             TEST_CONFIG=${{ secrets.TEST_CONFIG }}
     
-    deploy:
-      name: Deploy the container bot
-      runs-on: ubuntu-latest
-      needs: build
-      steps:
-        - name: Deploy the container bot
-          uses: appleboy/ssh-action@master
-          env:
-            CONTAINER_NAME: ticker-bot
-          with:
-            host: ${{ secrets.PRODUCTION_HOST }}
-            username: ${{ secrets.PRODUCTION_USERNAME }}
-            port: ${{ secrets.PRODUCTION_PORT }}
-            key: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
-            script: |
-              docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
-              docker pull ${{ jobs.outputs.tag }}
-              docker run -d --name ${{ env.CONTAINER_NAME }} ${{ jobs.outputs.tag }}
+  deploy:
+    name: Deploy the container bot
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy the container bot
+        uses: appleboy/ssh-action@master
+        env:
+          CONTAINER_NAME: ticker-bot
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          key: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
+          script: |
+            docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
+            docker pull ${{ jobs.outputs.tag }}
+            docker run -d --name ${{ env.CONTAINER_NAME }} ${{ jobs.outputs.tag }}
