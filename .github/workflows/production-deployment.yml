@@ -54,7 +54,7 @@ jobs:
         env:
           CONTAINER_NAME: ticker-bot-fuiyoo
           CONFIG_VOLUME: crypto-discord-bot-config
-          PRODUCTION_CONFIG: '${{ secrets.PRODUCTION_CONFIG }}'
+          PRODUCTION_CONFIG: ${{ secrets.PRODUCTION_CONFIG }}
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USERNAME }}
