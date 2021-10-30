@@ -1,17 +1,23 @@
 {
+    "newRelicConfig": {
+        "enabled": false,
+        "licenseKey": "<your-newrelic-license>",
+        "appName": "<newrelic-app-name>"
+    },
     "gasTickerConfig": {
-        "apiKey": "test",
-        "discordBotKey": "test.test.test",
-        "guildID": "test"
+        "apiKey": "<your-ethgasstation-api-key>",
+        "discordBotKey": "<your-discord-bot-api-key>",
+        "guildID": "<your-discord-guild-id>"
     },
     "priceTickerConfig": {
         "coinList": [
             {
                 "id": "DOGE",
+                "coingeckoID": "dogecoin",
                 "decimalPlace": 4,
                 "vsCurrencies": "USD",
-                "discordBotKey": "test.test.test",
-                "guildID": "test"
+                "discordBotKey": "<your-discord-bot-api-key>",
+                "guildID": "<your-discord-guild-id>"
             }
         ]
     }
