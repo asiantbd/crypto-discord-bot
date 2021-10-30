@@ -1,0 +1,55 @@
+name: "Run Test"
+
+on: [push, pull_request]
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GO_VERSION: 1.16
+
+jobs:
+  test:
+    name: "Running go test"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create .env file
+        shell: bash
+        env:
+          TEST_CONFIG: ${{ secrets.TEST_CONFIG }}
+        run: |
+          echo "$TEST_CONFIG" > ./config.test.json
+      - name: Test
+        run: go test ./...
+  
+  build:
+    name: Build the container image
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1        
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: APPLICATION_NAME=${{ env.IMAGE_NAME }},GO_VERSION=${{ env.GO_VERSION }}
