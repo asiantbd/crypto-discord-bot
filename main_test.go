@@ -4,21 +4,11 @@ import (
 	"log"
 	"testing"
 
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
-func setViperTest() error {
-	viper.SetConfigName("config.json")
-	viper.SetConfigType("json")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./config/")
-
-	return viper.ReadInConfig()
-}
-
 func coreGenerator() *Core {
-	err := setViperTest()
+	err := setViper()
 	if err != nil {
 		log.Fatal("failed to set viper variable: ", err)
 	}
