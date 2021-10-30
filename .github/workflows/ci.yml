@@ -71,13 +71,14 @@ jobs:
       - name: Deploy the container bot
         uses: appleboy/ssh-action@master
         env:
-          CONTAINER_NAME: ticker-bot
+          CONTAINER_NAME: ticker-bot-fuiyoo
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USERNAME }}
           port: ${{ secrets.PRODUCTION_SSH_PORT }}
           key: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
           script: |
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
             docker stop ${{ env.CONTAINER_NAME }} || true && docker rm ${{ env.CONTAINER_NAME }} || true
             docker pull ${{ needs.build.outputs.tag }}
             docker run -d --name ${{ env.CONTAINER_NAME }} ${{ needs.build.outputs.tag }}
