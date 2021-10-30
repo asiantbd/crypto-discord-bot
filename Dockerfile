@@ -1,14 +1,13 @@
 # Argument for Go version
 ARG GO_VERSION
-ARG APPLICATION_NAME
-
+ARG TEST_CONFIG
 # STAGE 1: building the executable
 FROM golang:${GO_VERSION}-alpine AS build
-ENV GO_VERSION=${GO_VERSION} \
-    APPLICATION_NAME=${APPLICATION_NAME}
+
 WORKDIR /src
 COPY ./go.mod ./go.sum ./
-RUN go mod download
+RUN go mod download               \
+    echo ${TEST_CONFIG} > config.json
 COPY ./ ./
 
 # Build the executable
@@ -25,6 +24,7 @@ LABEL maintainer="asiantbd_team"
 USER nonroot:nonroot
 # copy compiled app
 COPY --from=build --chown=nonroot:nonroot /app /app
- 
+COPY --from=build --chown=nonroot:nonroot /src/config.json /app/config.json
+WORKDIR /app
 # run binary; use vector form
 ENTRYPOINT ["/app"]
