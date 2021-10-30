@@ -12,6 +12,7 @@ func setViperTest() error {
 	viper.SetConfigName("config.test.json")
 	viper.SetConfigType("json")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config/")
 
 	return viper.ReadInConfig()
 }
