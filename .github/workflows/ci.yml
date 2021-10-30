@@ -55,4 +55,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: APPLICATION_NAME=${{ env.IMAGE_NAME }},GO_VERSION=${{ env.GO_VERSION }}
+          build-args: |
+            APPLICATION_NAME=${{ env.IMAGE_NAME }}
+            GO_VERSION=${{ env.GO_VERSION }}
