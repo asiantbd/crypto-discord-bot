@@ -1,10 +1,9 @@
 name: "Build and smoke test container"
 
 on:
-  workflow_run:
-    workflows: ["Run Unit Test"]
-    types:
-      - completed
+  pull_request:
+    branches:
+      - main
     
 env:
   REGISTRY: ghcr.io
