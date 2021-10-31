@@ -9,6 +9,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   GO_VERSION: 1.16
+  CONTAINER_NAME: ticker-bot-fuiyoo-test
+  CONFIG_VOLUME: crypto-discord-bot-config-test
+  TEST_CONFIG: '${{ secrets.TEST_CONFIG }}'
 
 jobs:
   build:
@@ -41,19 +44,22 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GO_VERSION=${{ env.GO_VERSION }}
-      - name: Smoke test the container
-        env:
-          CONTAINER_NAME: ticker-bot-fuiyoo-test
-          CONFIG_VOLUME: crypto-discord-bot-config-test
-          TEST_CONFIG: '${{ secrets.TEST_CONFIG }}'
+      - name: Dump the test config into volume        
         run: |
           docker volume create ${{ env.CONFIG_VOLUME }}
           docker run --rm -v crypto-discord-bot-config:/config -e APP_CONFIG='${{ env.TEST_CONFIG }}' busybox sh -c 'echo "$APP_CONFIG" > /config/config.json'
+        shell: bash
+      
+      - name: Run the new image created before
+        run:  |
           docker pull ${{ steps.meta.outputs.tags }}
           docker run -d -v ${{ env.CONFIG_VOLUME }}:/config --name ${{ env.CONTAINER_NAME }} ${{ steps.meta.outputs.tags }}
           docker ps | grep  ${{ env.CONTAINER_NAME }}
+        shell: bash
+
+      - name: Check if container running
+        run: |
           if [ "$( docker container inspect -f '{{.State.Running}}'  ${{ env.CONTAINER_NAME }} )" == "true" ]; then 
             echo "Docker container test is running, deleting and stopping the container"
             docker stop ${{ env.CONTAINER_NAME }} && docker rm ${{ env.CONTAINER_NAME }}
           fi
-        shell: bash
