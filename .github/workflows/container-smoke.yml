@@ -52,7 +52,7 @@ jobs:
       
       - name: Run the new image created before
         run:  |
-          docker pull ${{ steps.meta.outputs.tags }}
+          docker images
           docker run -d -v ${{ env.CONFIG_VOLUME }}:/config --name ${{ env.CONTAINER_NAME }} ${{ steps.meta.outputs.tags }}
           docker ps | grep  ${{ env.CONTAINER_NAME }}
         shell: bash
