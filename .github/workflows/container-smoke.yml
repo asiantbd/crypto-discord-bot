@@ -1,0 +1,61 @@
+name: "Build and smoke test container"
+
+on:
+  pull_request:
+    branches:
+      - main
+    
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GO_VERSION: 1.16
+  CONTAINER_NAME: ticker-bot-fuiyoo-test
+  CONFIG_VOLUME: crypto-discord-bot-config-test
+  TEST_CONFIG: '${{ secrets.TEST_CONFIG }}'
+
+jobs:
+  build:
+    name: Container smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          load: true
+          build-args: |
+            GO_VERSION=${{ env.GO_VERSION }}
+      - name: Dump the test config into volume        
+        run: |
+          docker volume create ${{ env.CONFIG_VOLUME }}
+          docker run --rm -v crypto-discord-bot-config:/config -e APP_CONFIG='${{ env.TEST_CONFIG }}' busybox sh -c 'echo "$APP_CONFIG" > /config/config.json'
+        shell: bash
+      
+      - name: Run the new image created before
+        run:  |
+          docker images
+          docker run -d --rm -v ${{ env.CONFIG_VOLUME }}:/config --name ${{ env.CONTAINER_NAME }} ${{ steps.meta.outputs.tags }}
+          docker ps | grep  ${{ env.CONTAINER_NAME }}
+        shell: bash
+
+      - name: Check if container running properly
+        run: |
+          if [ "$( docker container inspect -f '{{.State.Running}}'  ${{ env.CONTAINER_NAME }} )" == "true" ]; then 
+            echo "Docker container test is running, deleting and stopping the container"
+            docker stop ${{ env.CONTAINER_NAME }} && docker rm ${{ env.CONTAINER_NAME }}
+          fi
+        shell: bash
