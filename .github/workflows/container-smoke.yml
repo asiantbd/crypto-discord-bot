@@ -56,3 +56,4 @@ jobs:
             echo "Docker container test is running, deleting and stopping the container"
             docker stop ${{ env.CONTAINER_NAME }} && docker rm ${{ env.CONTAINER_NAME }}
           fi
+        shell: bash
