@@ -42,6 +42,7 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          load: true
           build-args: |
             GO_VERSION=${{ env.GO_VERSION }}
       - name: Dump the test config into volume        
