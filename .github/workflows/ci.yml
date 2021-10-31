@@ -1,8 +1,8 @@
-name: "Deployment Test"
+name: "Build and smoke test container"
 
 on:
   workflow_run:
-    workflows: ["analyze", "Run Unit Test"]
+    workflows: ["CodeQL Analysis", "Run Unit Test"]
     branches-ignore: [main]
     types:
       - completed
