@@ -2,7 +2,7 @@ name: "Build and smoke test container"
 
 on:
   workflow_run:
-    workflows: ["CodeQL Analysis"]
+    workflows: ["Run Unit Test"]
     types:
       - completed
     
