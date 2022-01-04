@@ -10,5 +10,5 @@ require (
 	github.com/newrelic/go-agent/v3 v3.15.1
 	github.com/newrelic/go-agent/v3/integrations/nrzap v1.0.1
 	github.com/spf13/viper v1.9.0
-	go.uber.org/zap v1.19.1
+	go.uber.org/zap v1.20.0
 )
