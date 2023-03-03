@@ -33,6 +33,5 @@ jobs:
         run: |
           mkdir config
           mv ./config.json ./config/config.json
-          sleep 65
       - name: Test 2
         run: go test ./...
