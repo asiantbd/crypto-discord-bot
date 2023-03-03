@@ -89,6 +89,18 @@ func NewCore(cfg *Config, logger *zap.SugaredLogger) (*Core, error) {
 	coingeckoClient := resty.New()
 	coingeckoClient.HostURL = "https://api.coingecko.com/api/v3"
 
+	// Set retry policy on Coingecko API (10-30 req/min)
+	// https://www.coingecko.com/en/premium/pricing
+	coingeckoClient.SetRetryCount(3)
+	coingeckoClient.SetRetryWaitTime(30 * time.Second)
+
+	// Retry on (429) http.StatusTooManyRequests
+	coingeckoClient.AddRetryCondition(
+    func(r *resty.Response, err error) bool {
+			return r.StatusCode() == 429
+    },
+	)
+
 	ethGasStationClient := resty.New()
 	ethGasStationClient.HostURL = "https://ethgasstation.info/api/"
 
