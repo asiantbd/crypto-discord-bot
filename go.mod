@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/bwmarrin/discordgo v0.26.1
+	github.com/bwmarrin/discordgo v0.27.0
 	github.com/go-co-op/gocron v1.17.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/newrelic/go-agent/v3 v3.20.0
