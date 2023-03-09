@@ -7,12 +7,15 @@ on:
 
 jobs:
   test:
-    name: Run Unit Test
+    name: Run Golang Unit Test
     strategy:
       matrix:
         go-version: [1.19.x, 1.20.x]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./go
     steps:
       - name: Install Go
         uses: actions/setup-go@v3

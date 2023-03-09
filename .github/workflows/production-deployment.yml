@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tags }}
+    defaults:
+      run:
+        working-directory: ./go
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
