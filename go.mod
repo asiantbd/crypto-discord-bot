@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/Jeffail/gabs v1.4.0
 	github.com/bwmarrin/discordgo v0.27.1
-	github.com/go-co-op/gocron v1.22.2
+	github.com/go-co-op/gocron v1.23.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/newrelic/go-agent/v3 v3.21.0
 	github.com/newrelic/go-agent/v3/integrations/nrzap v1.0.1
@@ -31,7 +31,6 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef // indirect
