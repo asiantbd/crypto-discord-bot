@@ -151,8 +151,8 @@ github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3v
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/newrelic/go-agent/v3 v3.0.0/go.mod h1:H28zDNUC0U/b7kLoY4EFOhuth10Xu/9dchozUiOseQQ=
-github.com/newrelic/go-agent/v3 v3.21.1 h1:nSLaQK+w/BHPUEpkPB+fX3ikgaRR2qyQiTECrcY+AmQ=
-github.com/newrelic/go-agent/v3 v3.21.1/go.mod h1:AGagR69YHzamnvfxq9aDHnImvZwxr7C+4w7UN0Bm3UM=
+github.com/newrelic/go-agent/v3 v3.22.1 h1:c1nPHw/LMNx+J6U5dtVb9xGywftj36cG3sxrHwOwygA=
+github.com/newrelic/go-agent/v3 v3.22.1/go.mod h1:uuvX0xe0ZuO2wAXuM30vdIjyc76z3TfG81BVkf3pclc=
 github.com/newrelic/go-agent/v3/integrations/nrzap v1.0.1 h1:TYEBVIQn/YHz5phND38DTdLvSDCyUEA5N62rNEA/43I=
 github.com/newrelic/go-agent/v3/integrations/nrzap v1.0.1/go.mod h1:aHIFzFVFxtrJ4y9LJx0J5yI9cb23QJcvWwljZzBde5c=
 github.com/pelletier/go-toml/v2 v2.0.6 h1:nrzqCb7j9cDFj2coyLNLaZuJTLjWjlaz6nvTvIwycIU=
