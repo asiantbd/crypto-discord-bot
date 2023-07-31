@@ -7,7 +7,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/go-co-op/gocron v1.23.0
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/newrelic/go-agent/v3 v3.21.1
+	github.com/newrelic/go-agent/v3 v3.24.0
 	github.com/newrelic/go-agent/v3/integrations/nrzap v1.0.1
 	github.com/spf13/viper v1.15.0
 	go.uber.org/zap v1.24.0
