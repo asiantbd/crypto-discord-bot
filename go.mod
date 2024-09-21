@@ -1,6 +1,6 @@
 module github.com/asiantbd/crypto-discord-bot
 
-go 1.20
+go 1.23
 
 require (
 	github.com/Jeffail/gabs v1.4.0
