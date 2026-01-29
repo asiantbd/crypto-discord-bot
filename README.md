@@ -5,6 +5,6 @@
 
 This project uses semantic versioning with automatic tagging on deployment. The version is tracked in the `VERSION` file at the root of the repository.
 
-When code is deployed to production (pushed to the `main` branch), the CI/CD pipeline automatically creates a Git tag in the format `v<major>.<minor>.<patch>-<timestamp>` (e.g., `v1.0.0-20260129123456`).
+When code is deployed to production (pushed to the `main` branch), the CI/CD pipeline automatically creates a Git tag in the format `v<major>.<minor>.<patch>-<timestamp>-<commit-sha>` (e.g., `v1.0.0-20260129123456-a1b2c3d`).
 
-To update the version, modify the `VERSION` file before merging to `main`.
+To update the version, modify the `VERSION` file before merging to `main`. The VERSION file must contain a valid semantic version in the format `X.Y.Z` (e.g., `1.0.0`).
