@@ -95,19 +95,17 @@ jobs:
           git fetch --tags
           
           VERSION=${{ steps.version.outputs.version }}
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          TAG="v${VERSION}-${TIMESTAMP}-${SHORT_SHA}"
+          TAG="v${VERSION}"
           
           # Check if tag already exists locally or remotely
           if git rev-parse "${TAG}" >/dev/null 2>&1; then
-            echo "Tag ${TAG} already exists locally, skipping creation"
+            echo "Tag ${TAG} already exists, skipping creation"
             exit 0
           fi
           
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${TAG}" -m "Auto-tagged deployment at ${TIMESTAMP} (commit: ${SHORT_SHA})"
+          git tag -a "${TAG}" -m "Release ${TAG}"
           
           # Push tag with error handling
           if git push origin "${TAG}"; then
