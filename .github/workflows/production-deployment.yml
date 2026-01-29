@@ -91,14 +91,17 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
       - name: Create and push tag
         run: |
+          # Fetch latest tags from remote to minimize race condition window
+          git fetch --tags
+          
           VERSION=${{ steps.version.outputs.version }}
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           SHORT_SHA=$(git rev-parse --short HEAD)
           TAG="v${VERSION}-${TIMESTAMP}-${SHORT_SHA}"
           
-          # Check if tag already exists
+          # Check if tag already exists locally or remotely
           if git rev-parse "${TAG}" >/dev/null 2>&1; then
-            echo "Tag ${TAG} already exists, skipping creation"
+            echo "Tag ${TAG} already exists locally, skipping creation"
             exit 0
           fi
           
@@ -110,6 +113,6 @@ jobs:
           if git push origin "${TAG}"; then
             echo "Successfully created and pushed tag: ${TAG}"
           else
-            echo "Warning: Failed to push tag ${TAG}. It may already exist on remote."
+            echo "Error: Failed to push tag ${TAG}. The tag may already exist on remote or there may be a permissions issue."
             exit 1
           fi
