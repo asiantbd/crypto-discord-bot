@@ -67,3 +67,30 @@ jobs:
             docker run --rm -v crypto-discord-bot-config:/config -e APP_CONFIG='${{ env.PRODUCTION_CONFIG }}' busybox sh -c 'echo "$APP_CONFIG" > /config/config.json'
             docker pull ${{ needs.build.outputs.tag }}
             docker run -d -v ${{ env.CONFIG_VOLUME }}:/config --name ${{ env.CONTAINER_NAME }} ${{ needs.build.outputs.tag }}
+
+  tag:
+    name: Create Git tag for deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Read VERSION file
+        id: version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - name: Create and push tag
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TAG="v${VERSION}-${TIMESTAMP}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Auto-tagged deployment at ${TIMESTAMP}"
+          git push origin "${TAG}"
+          echo "Created and pushed tag: ${TAG}"
